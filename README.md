@@ -2,7 +2,13 @@
 
 A colorful, customizable system info CLI tool — a modern reimagination of the classic `finger` command.
 
-![screenshot](assets/demo.png) <!-- Optional: replace with your actual screenshot path -->
+## 📸 Screenshots
+
+### Markdown and All Output Example
+![Markdown-All Output](screenshots/markdown-all.png)
+
+### Minimal and JSON Output Example
+![Minimal-JSON Output](screenshots/minimal-json.png)
 
 ---
 
