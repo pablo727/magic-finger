@@ -21,10 +21,12 @@ A colorful, customizable system info CLI tool — a modern reimagination of the 
 
 ## 🔧 Available Options
 
-Flag               Description
---markdown         Show output as Markdown using `glow`
---copy             Copy output to clipboard (`xclip` / `pbcopy`)
---all              Loop through all users on the system
+Flag              | Description
+--markdown        | Show output as Markdown using `glow`
+--copy            | Copy output to clipboard (`xclip` / `pbcopy`)
+--all             | Loop through all users on the system
+--json            | Output raw JSON (good for scripting)
+--minimal         | Compact info: username, real name, home dir, shell, last login...
 
 ℹ️ If no flag is provided, it runs for the current user only.
 

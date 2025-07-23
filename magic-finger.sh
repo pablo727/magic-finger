@@ -15,12 +15,16 @@ user="${USER}"
 show_markdown=false
 copy_to_clipboard=false
 all_users=false
+output_json=false
+minimal_mode=false
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         --markdown) show_markdown=true ;;
         --copy) copy_to_clipboard=true ;;
         --all) all_users=true ;;
+        --json) output_json=true ;;
+        --minimal) minimal_mode=true ;;
         *) echo -e "${red}Unknown option: $1${reset}" && exit 1 ;;
     esac
     shift
@@ -35,7 +39,44 @@ print_user_info() {
     uptime_info=$(uptime -p)
     file_count=$(find "$homedir" -type f 2>/dev/null | wc -l)
 
-    output=$(cat <<EOF
+    if $output_json; then
+        jq -n \
+            --arg username "$username" \
+            --arg realname "$realname" \
+            --arg homedir "$homedir" \
+            --arg shell "$shell" \
+            --arg last_login "$last_login" \
+            --arg logged_in "$([ "$logged_in" -gt 0 ] && echo "Yes" || echo "No")" \
+            --arg uptime "$uptime_info" \
+            --arg file_count "$file_count" \
+            '{
+                username: $username,
+                realname: $realname,
+                homedir: $homedir,
+                shell: $shell,
+                last_login: $last_login,
+                logged_in: $logged_in,
+                system_uptime: $uptime,
+                home_file_count: ($file_count | tonumber)
+            }'
+        return
+    fi
+
+    # ── Output formatting ────────────────────────────────
+    if $minimal_mode; then
+        output=$(cat <<EOF
+Username       : $username
+Real Name      : $realname
+Home Directory : $homedir
+Shell          : $shell
+Last Login     : $last_login
+Logged In      : $( [ "$logged_in" -gt 0 ] && echo "Yes" || echo "No" )
+System Uptime  : $uptime_info
+Files in Home  : $file_count
+EOF
+)
+    else
+        output=$(cat <<EOF
 ${bold}${blue}👤 Username    ${reset}: $username
 ${bold}${blue}📛 Real Name   ${reset}: $realname
 ${bold}${blue}🏠 Home Dir    ${reset}: $homedir
@@ -46,11 +87,12 @@ ${bold}${blue}📈 System Uptime${reset}: $uptime_info
 ${bold}${blue}📄 Files in Home${reset}: $file_count
 EOF
 )
+    fi
 
     echo -e "$output"
 
     # ── Markdown Export ───────────────────────────
-    if $show_markdown; then
+    if $show_markdown && ! $minimal_mode && ! $output_json; then
         output_md="/tmp/user_${username}.md"
         cat << MD > "$output_md"
 # 👤 User Info: \`$username\`
@@ -68,7 +110,7 @@ MD
     fi
 
     # ── Copy to Clipboard ─────────────────────────
-    if $copy_to_clipboard; then
+    if $copy_to_clipboard && ! $output_json; then
         if command -v xclip &>/dev/null; then
             echo -e "$output" | xclip -selection clipboard
             echo -e "${green}📋 Copied to clipboard (xclip)!${reset}"
@@ -85,7 +127,7 @@ MD
 if $all_users; then
     for u in $(cut -d: -f1 /etc/passwd); do
         if id "$u" &>/dev/null; then
-            echo -e "\n${cyan}===== $u =====${reset}"
+            $output_json || $minimal_mode || echo -e "\n${cyan}===== $u =====${reset}"
             print_user_info "$u"
         fi
     done
